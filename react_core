@@ -1,0 +1,387 @@
+react core 
+	Components and props:
+		Components:
+			functional.
+			class.
+			
+			Functional Components:
+				These are JavaScript functions that return JSX.
+				They are simpler and often preferred for their readability.
+					import React from 'react';
+
+					const Greeting = ({ name }) => {     (or) function Greeting(name)
+						return <h1>Hello, {name}!</h1>;
+					};
+
+					export default Greeting;
+			Class Components:
+				These are ES6 classes that extend React.Component.
+				They must contain a render() method that returns JSX.
+				Typically used before the introduction of Hooks.
+					import React, { Component } from 'react';
+
+					class Greeting extends Component {
+						render() {
+							return <h1>Hello, {this.props.name}!</h1>;
+						}
+					}
+
+					export default Greeting;
+		Props:	
+			props
+			props-type
+			
+			Props:
+				Props are a way to pass data and event handlers from one component to another,
+				primarily from a parent component to a child component. Props are read-only, 
+				meaning that a child component cannot modify the props it receives.
+				
+				function ParentComponent() {
+				  const message = "Hello, World!";
+				  
+				  return (
+					<ChildComponent greeting={message} />
+				  );
+				}
+
+				function ChildComponent(props) {
+				  return <h1>{props.greeting}</h1>;
+			Defaultprops:(this value will be used when the no value is called )
+				MyComponent.defaultProps = {
+				  name: 'Default Name',
+				};
+				
+			Two ways access props :
+			
+				function ChildComponent(props) {
+				  return <h1>{props.greeting}</h1>;
+					
+				const Greeting = ({ name }) => {
+					  return <h1>Hello, {name}!</h1>;
+					};
+					
+			propstype:(what type of value to given )
+				MyComponent.propTypes = {
+				  name: PropTypes.string,
+				};
+
+				
+	State managements:
+		
+		Discuss the differences between local state, global state, and how to manage state using Context API,
+		Redux, or other state management libraries.
+		
+	Life cycle:
+		Mounting:
+			constructor(): Initializes state and binds methods.
+			getDerivedStateFromProps(): Updates state based on props before rendering.
+			render(): Renders the JSX.
+			componentDidMount(): Invoked after the component is mounted. Great for API calls and setup.
+		Updating:
+			getDerivedStateFromProps(): Similar to mounting; updates state based on new props.
+			shouldComponentUpdate(): Decides whether to re-render.
+			render(): Renders the updated JSX.
+			componentDidUpdate(): Invoked after updates. Ideal for side effects based on state/props changes.
+		Unmounting:
+			componentWillUnmount(): Cleans up (e.g., cancelling requests, removing listeners).
+		Error Handling:
+			componentDidCatch(): Catches errors in child components.
+			
+		import React from 'react';
+
+			class DataFetcher extends React.Component {
+			  constructor(props) {
+				super(props);
+				this.state = {
+				  data: null,
+				  error: null,
+				};
+			  }
+
+			  static getDerivedStateFromProps(nextProps, prevState) {
+				// Update state based on new props if necessary
+				if (nextProps.id !== prevState.id) {
+				  return { id: nextProps.id, data: null }; // Reset data when ID changes
+				}
+				return null; // No state update
+			  }
+
+			  componentDidMount() {
+				this.fetchData(this.props.id);
+			  }
+
+			  componentDidUpdate(prevProps) {
+				// Fetch new data if the ID prop has changed
+				if (this.props.id !== prevProps.id) {
+				  this.fetchData(this.props.id);
+				}
+			  }
+
+			  fetchData(id) {
+				// Simulate an API call
+				fetch(`https://api.example.com/data/${id}`)
+				  .then(response => response.json())
+				  .then(data => this.setState({ data, error: null }))
+				  .catch(error => this.setState({ error: error.message }));
+			  }
+
+			  componentWillUnmount() {
+				// Cleanup logic can be added here
+				console.log('Component will unmount, cleaning up...');
+			  }
+
+			  componentDidCatch(error, info) {
+				// Handle error in child components
+				this.setState({ error: 'Something went wrong!' });
+				console.error("Error caught:", error, info);
+			  }
+
+			  render() {
+				const { data, error } = this.state;
+
+				if (error) {
+				  return <div>Error: {error}</div>;
+				}
+
+				if (!data) {
+				  return <div>Loading...</div>;
+				}
+
+				return (
+				  <div>
+					<h1>Data for ID: {this.props.id}</h1>
+					<pre>{JSON.stringify(data, null, 2)}</pre>
+				  </div>
+				);
+			  }
+			}
+
+			export default DataFetcher;
+
+		Functional Component Lifecycle with Hooks
+		Mounting:
+			useEffect(() => { /* setup code */ }, []): Mimics componentDidMount().
+		Updating:
+			useEffect(() => { /* effect code */ }, [dependencies]): Runs after every render or when specified dependencies change (similar to componentDidUpdate()).
+			Cleanup can be done by returning a function from useEffect, mimicking componentWillUnmount().
+		Unmounting:
+			The cleanup function in useEffect() handles cleanup tasks.
+			
+			import React, { useState, useEffect } from 'react';
+
+				const DataFetcher = ({ id }) => {
+				  const [data, setData] = useState(null);
+				  const [error, setError] = useState(null);
+
+				  // Mounting: Mimics componentDidMount
+				  useEffect(() => {
+					const fetchData = async () => {
+					  try {
+						const response = await fetch(`https://api.example.com/data/${id}`);
+						if (!response.ok) {
+						  throw new Error('Network response was not ok');
+						}
+						const result = await response.json();
+						setData(result);
+					  } catch (err) {
+						setError(err.message);
+					  }
+					};
+
+					fetchData();
+					
+					// No cleanup function needed here since there's no subscription or ongoing processes
+				  }, [id]); // Updating: Runs when `id` changes (mimics componentDidUpdate)
+
+				  // Cleanup for unmounting can be added if necessary
+				  useEffect(() => {
+					return () => {
+					  console.log('Cleaning up...'); // Mimics componentWillUnmount
+					};
+				  }, []); // Runs once on unmount
+
+				  if (error) {
+					return <div>Error: {error}</div>;
+				  }
+
+				  if (!data) {
+					return <div>Loading...</div>;
+				  }
+
+				  return (
+					<div>
+					  <h1>Data for ID: {id}</h1>
+					  <pre>{JSON.stringify(data, null, 2)}</pre>
+					</div>
+				  );
+				};
+
+				export default DataFetcher;
+
+	Hooks :
+		usestate
+		useEffect
+		useReducer
+		useContent
+		useMemo and useCallback
+		Customhooks
+		
+		. useState
+				Allows you to add state to functional components.
+
+				javascript
+				Copy code
+				import React, { useState } from 'react';
+
+				function Counter() {
+				  const [count, setCount] = useState(0);
+
+				  return (
+					<div>
+					  <p>{count}</p>
+					  <button onClick={() => setCount(count + 1)}>Increment</button>
+					</div>
+				  );
+				}
+		useEffect
+			Enables side effects in functional components, such as data fetching, subscriptions, or manual DOM manipulations.
+
+			javascript
+			Copy code
+			import React, { useState, useEffect } from 'react';
+
+			function Example() {
+			  const [data, setData] = useState(null);
+
+			  useEffect(() => {
+				fetch('https://api.example.com/data')
+				  .then(response => response.json())
+				  .then(data => setData(data));
+			  }, []); // Empty dependency array means it runs once on mount
+
+			  return <div>{data ? JSON.stringify(data) : 'Loading...'}</div>;
+			}
+		useContext
+			Allows you to use context without wrapping components in a Consumer.
+
+			javascript
+			Copy code
+			import React, { useContext } from 'react';
+
+			// Assuming a Context has been created
+			const MyContext = React.createContext();
+
+			function Component() {
+			  const value = useContext(MyContext);
+			  return <div>{value}</div>;
+			}
+		useReducer
+			An alternative to useState for managing more complex state logic, similar to Redux.
+
+			import React, { useReducer } from 'react';
+
+			const initialState = { count: 0 };
+
+			function reducer(state, action) {
+			  switch (action.type) {
+				case 'increment':
+				  return { count: state.count + 1 };
+				case 'decrement':
+				  return { count: state.count - 1 };
+				default:
+				  throw new Error();
+			  }
+			}
+
+			function Counter() {
+			  const [state, dispatch] = useReducer(reducer, initialState);
+
+			  return (
+				<div>
+				  Count: {state.count}
+				  <button onClick={() => dispatch({ type: 'increment' })}>+</button>
+				  <button onClick={() => dispatch({ type: 'decrement' })}>-</button>
+				</div>
+			  );
+			}
+		useMemo and useCallback
+			Optimize performance by memoizing values or functions.
+
+			useMemo: Memorizes a value so that it doesn't get recalculated on every render.
+			const memoizedValue = useMemo(() => computeExpensiveValue(a, b), [a, b]);
+			
+			useCallback: Memorizes a function definition.
+			const memoizedCallback = useCallback(() => {
+			  doSomething(a, b);
+			}, [a, b]);
+		Custom Hooks
+			You can create your own hooks to encapsulate reusable logic.
+
+			function useFetch(url) {
+			  const [data, setData] = useState(null);
+			  useEffect(() => {
+				fetch(url)
+				  .then(response => response.json())
+				  .then(setData);
+			  }, [url]);
+			  return data;
+			}
+		Hooks class Component
+		
+			1. useState → State in Class Components
+            Instead of useState, you manage state using this.state and this.setState().
+			class MyComponent extends React.Component {
+			  constructor(props) {
+				super(props);
+				this.state = { count: 0 };
+			  }
+
+			  increment = () => {
+				this.setState((prevState) => ({ count: prevState.count + 1 }));
+			  };
+
+			  render() {
+				return (
+				  <div>
+					<p>Count: {this.state.count}</p>
+					<button onClick={this.increment}>Increment</button>
+				  </div>
+				);
+			  }
+			}
+			2. useEffect → Lifecycle Methods
+			You can use componentDidMount, componentDidUpdate, and componentWillUnmount to mimic useEffect.
+
+			class MyComponent extends React.Component {
+			  componentDidMount() {
+				// Equivalent to useEffect(() => { ... }, []);
+			  }
+
+			  componentDidUpdate(prevProps, prevState) {
+				// Equivalent to useEffect(() => { ... }, [dependencies]);
+			  }
+
+			  componentWillUnmount() {
+				// Equivalent to cleanup function in useEffect
+			  }
+
+			  render() {
+				// ...
+			  }
+			}
+			3. useContext → Context API
+			To use context in class components, you can use the Context.Consumer:
+
+			const MyContext = React.createContext();
+
+			class MyComponent extends React.Component {
+			  render() {
+				return (
+				  <MyContext.Consumer>
+					{value => <div>{value}</div>}
+				  </MyContext.Consumer>
+				);
+			  }
+			}
+			4. Custom Hooks
+			You can't directly use hooks in class components, but you can create higher-order components (HOCs) or render props to encapsulate logic that would typically go into a custom hook.
