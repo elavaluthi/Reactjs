@@ -14,7 +14,9 @@ Advanced Concepts
 
    Context API
 
-   React Router
+   React Router(Route configuration and nested routes
+           Dynamic routing
+             Route protection (Private/Public Routes))
 
    Performance Optimization
 
@@ -23,6 +25,12 @@ State Management Libraries
    Redux
 
    Comparison with Other State Management Libraries
+
+Performance Optimization
+       React.memo, useMemo, useCallback
+       Virtual DOM and reconciliation
+       Code splitting and lazy loading with React.lazy and Suspense
+       Optimizing re-renders
 
 Testing
 
